@@ -1,149 +1,207 @@
-# SwarajDesk RAG-Based Multilingual Chatbot Backend
+# SwarajDesk Multilingual RAG-Powered Conversational Support System
 
-A production-ready backend implementation of the SwarajDesk support chatbot powered by Retrieval-Augmented Generation (RAG). The system retrieves information from a structured knowledge base and generates accurate, context-aware responses without hallucination.
+An AI-powered multilingual citizen support system that delivers accurate, hallucination-free responses using Retrieval-Augmented Generation (RAG). The system supports both text and voice interactions, answering queries strictly from verified SwarajDesk documents and policies.
 
 ## Features
 
-- **Retrieval-Augmented Generation**: Provides factual answers grounded in the knowledge base
-- **Domain-Restricted Responses**: Strictly uses knowledge base only, preventing hallucinations
-- **Multilingual Support**: Responds in English, Hindi, and Hinglish
-- **Vector Search**: Efficient semantic search using ChromaDB
-- **REST API**: Simple FastAPI endpoint for easy frontend integration
-- **Persistent Storage**: Automatic embedding storage and reuse
+### Core Capabilities
 
-## Tech Stack
+- **Multilingual Support**: English, Hindi, Hinglish, and Odia (easily scalable)
+- **Zero Hallucinations**: Answers derived exclusively from authenticated knowledge base
+- **Voice Input**: Speech-to-text conversion for natural voice queries
+- **Voice Output**: Text-to-speech responses in selected language
+- **Text Chat**: Full-featured text-based conversation interface
+- **Context-Aware**: Vector similarity search with semantic understanding
+- **Smart Escalation**: Automatic redirection to support/admin when needed
 
-| Component | Technology |
-|-----------|------------|
-| Language | Python |
-| Framework | FastAPI |
-| Vector Database | ChromaDB |
-| Embedding Model | HuggingFace Sentence Transformer |
-| LLM Provider | Groq |
-| Data Format | JSON |
+---
+
+## System Architecture
+
+```
+User Input (Text/Voice)
+        ↓
+[Speech-to-Text] ← Google STT (if voice)
+        ↓
+┌─────────────────────────────┐
+│      RAG Pipeline           │
+│  • Sentence Transformers    │
+│  • ChromaDB Vector Store    │
+│  • Groq LLM (gpt-oss-120b)  │
+└─────────────────────────────┘
+        ↓
+Bot Response (Text)
+        ↓
+[Text-to-Speech] ← gTTS (if voice)
+        ↓
+Final Output (Text/Audio)
+```
+
+---
 
 ## Project Structure
 
 ```
-project_root/
+SIH-SWARJ_AI_RAG_BOT_(DEPLOYED_FINAL)/
 │
-├── main.py                      # FastAPI backend with /chat endpoint
-├── app.py                       # RAG pipeline: embeddings, retrieval, LLM
-├── SwarajDesk_vectorDB.json     # Knowledge base dataset
-├── chroma_store/                # Persistent ChromaDB storage (auto-created)
-├── requirements.txt             # Project dependencies
-├── .env                         # Environment variables (create this)
-└── README.md                    # Documentation
+├── main.py                      # FastAPI app entry point
+├── app.py                       # RAG pipeline & LLM logic
+├── speech_to_text.py            # Voice input processing
+├── text_to_speech.py            # Voice output generation
+├── voice_routes.py              # Voice chat API endpoints
+├── SwarajDesk_vectorDB.json     # Knowledge base documents
+├── requirements.txt             # Python dependencies
+├── .env                         # Environment variables (not in git)
+│
+├── chroma_store/                # Vector database persistence
+└── static/
+    └── voice/                   # Generated audio files
 ```
 
-## Installation and Setup
+---
 
-### 1. Clone the Repository
+## Technology Stack
 
-```bash
-git clone <repository-url>
-cd <project-directory>
+| Layer | Technology |
+|-------|-----------|
+| **Backend** | FastAPI + Uvicorn |
+| **Vector Store** | ChromaDB |
+| **Embeddings** | HuggingFace Sentence-Transformers (multilingual) |
+| **LLM** | Groq API (openai/gpt-oss-120b) |
+| **Speech-to-Text** | Google SpeechRecognition |
+| **Text-to-Speech** | gTTS |
+| **Deployment** | AWS EC2, Gunicorn + Nginx |
+
+---
+
+## Project Setup
+
+### Prerequisites
+
+- Python 3.8+
+- pip
+- Virtual environment (recommended)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/<your-username>/swarajdesk-rag-bot.git
+   cd swarajdesk-rag-bot
+   ```
+
+2. **Create and activate virtual environment**
+   ```bash
+   # macOS/Linux
+   python -m venv venv
+   source venv/bin/activate
+   
+   # Windows
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
+4. **Set up environment variables**
+   
+   Create a `.env` file in the root directory:
+   ```env
+   GROQ_API_KEY=your_groq_api_key_here
+   HUGGINGFACEHUB_API_TOKEN=your_huggingface_token_here
+   LANGCHAIN_API_KEY=your_langchain_key_here  # Optional
+   ```
+
+5. **Create required directories**
+   ```bash
+   mkdir -p static/voice
+   ```
+
+6. **Run the application**
+   ```bash
+   uvicorn main:app --reload --port 8000
+   ```
+
+   The API will be available at `http://localhost:8000`
+
+---
+
+## API Endpoints
+
+### Health Check
+```http
+GET /health
 ```
 
-### 2. Install Dependencies
-
-```bash
-pip install -r requirements.txt
+### Welcome
+```http
+GET /
 ```
 
-### 3. Configure Environment Variables
+### Text Chat
+```http
+POST /chat_swaraj
+Content-Type: application/json
 
-Create a `.env` file in the root directory:
-
-```env
-GROQ_API_KEY=your_groq_key
-HUGGINGFACEHUB_API_TOKEN=your_huggingface_key
-LANGCHAIN_API_KEY=your_langchain_key  # optional
-```
-
-### 4. Start the Backend Server
-
-```bash
-uvicorn main:app --reload --port 8000
-```
-
-### 5. Test the API
-
-Open the interactive API documentation:
-
-```
-http://127.0.0.1:8000/docs
-```
-
-## API Endpoint
-
-### `POST /chat_swaraj`
-
-Processes user queries and returns contextual responses from the knowledge base.
-
-#### Request Body
-
-```json
-{
-  "user_query": "<user message>",
-  "language": "english" / "hindi" / "hinglish"
-}
-```
-
-#### Example Request
-
-```json
 {
   "user_query": "How do I reset my password?",
   "language": "english"
 }
 ```
 
-#### Response Format
-
+**Response:**
 ```json
 {
-  "bot_response": "<generated answer>"
+  "reply": "To reset your password, navigate to...",
+  "sources": ["document_id_1", "document_id_2"]
 }
 ```
 
-#### Example Response
+### Voice Chat
+```http
+POST /voice-chat
+Content-Type: multipart/form-data
 
+Form Data:
+- file: audio file (.wav or .mp3)
+- language: english | hindi | hinglish | odia
+```
+
+**Response:**
 ```json
 {
-  "bot_response": "To reset your password, go to the login page and click on 'Forgot Password'. You will receive a reset link via email."
+  "reply": "Your answer in text format",
+  "audio_url": "/static/voice/82f3b0a5e4b.mp3"
 }
 ```
 
-## Dependencies
+---
 
-See `requirements.txt` for the complete list.
+## Safety & Hallucination Prevention
+
+The system ensures accuracy through:
+
+- **Source-grounded responses**: Answers derived only from retrieved context
+- **No fabrication**: System never generates information not in the knowledge base
+- **Query validation**: Non-SwarajDesk queries redirected to support
+- **Escalation protocol**: Complex cases forwarded to admin
+- **Citation tracking**: All responses linked to source documents
+
+---
+
+## Supported Languages
+
+| Language | Code | Status |
+|----------|------|--------|
+| English | `english` | Full Support |
+| Hindi | `hindi` | Full Support |
+| Hinglish | `hinglish` | Full Support |
+| Odia | `odia` | Full Support |
+
+*Additional languages can be added by extending the language configuration.*
 
 
-
-
-
-
-
-
-## Docker
-
-Build and run the application inside Docker (recommended for EC2 deployments):
-
-Build the image:
-```bash
-docker build -t swarajdesk-backend:latest .
-```
-
-Run the container (map port 8000):
-```bash
-docker run -p 8000:8000 \
-  -e GROQ_API_KEY=your_groq_key \
-  -e HUGGINGFACEHUB_API_TOKEN=your_hf_token \
-  -v /path/on/host/chroma_store:/app/chroma_store \
-  --name swarajdesk-backend swarajdesk-backend:latest
-```
-
-Notes:
-- Mount a host volume to `/app/chroma_store` so vector DB persists across container restarts.
-- For production consider running behind a process manager or using a multi-worker server.
