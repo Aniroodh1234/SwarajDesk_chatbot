@@ -33,3 +33,7 @@ huggingface_hub
 streamlit
 pydantic
 FastAPI
+SpeechRecognition
+pydub
+gtts
+python-multipart
