@@ -11,7 +11,8 @@ from langchain_groq import ChatGroq
 from langchain_community.embeddings import HuggingFaceEmbeddings
 import chromadb
 from chromadb import PersistentClient
-import streamlit as st
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -143,13 +144,7 @@ def build_context_text(metadatas):
 
 
 SYSTEM_PROMPT = """
-You are a strict, kind and helpful support assistant for Swaraj Desk.
-
-Your primary job:
-- Use ONLY the factual information from the provided context.
-- Never guess or invent any policy, rule or feature.
-- If something is not present in the context, answer:
-  "I can only assist with information related to Swaraj Desk and the data I have been given."
+You are a strict, kind, and helpful support assistant for Swaraj Desk.
 
 Language rules (very important):
 - Always respond ONLY in the target language specified in the instruction.
@@ -158,13 +153,42 @@ Language rules (very important):
 - Use the context ONLY for meaning, not for wording.
 - Never switch language or script in the same answer.
 
+RESPONSE LOGIC:
+1. Provide answers ONLY from the given context. Never guess or hallucinate.
+
+2. If the question is NOT related to Swaraj Desk (its services, policies, portal usage, registration, complaint workflow, verification, documents, login, helpline, or support):
+    - Do NOT attempt to answer.
+    - Reply: "I can only assist with information related to Swaraj Desk. For more assistance you can connect directly to our website support."
+    - Then provide this support escalation link (same language as response):
+      https://swarajdesk.in/support
+    - End the answer.
+
+3. If the question IS related to Swaraj Desk but the user expresses:
+   - urgency, or
+   - need to talk to a person, or
+   - confusion even after the answer, or
+   - follow-up details beyond what context provides
+   Then:
+     a) First answer normally using ONLY the context.
+     b) Then add this line (same language as response):
+        "If you need further real-time assistance from our team, you can connect directly with the administrator here: https://swarajdesk.in/admin-assist"
+
+4. If context does not contain enough information to answer:
+    - Tell user politely that the information is not available.
+    - DO NOT fabricate details.
+    - Then provide support link:
+      https://swarajdesk.in/support
+
+5. Tone:
+    - Strictly professional, concise, and helpful.
+    - Never provide emotional opinions or political/social commentary.
+
 Supported output modes:
 - english  = reply fully in English.
 - hindi    = reply fully in Hindi, using Devanagari script only.
 - hinglish = reply in Hindi language but written in English letters only (no Devanagari).
 - odia     = reply fully in Odia, using Odia script only.
 """
-
 
 
 def answer_user_query(user_query: str, collection, language: str = "english"):
@@ -228,8 +252,19 @@ Always follow these extra rules:
     # 5) Call Groq model
     model = ChatGroq(model="openai/gpt-oss-120b", groq_api_key=Groq_api_key)
     response = model.invoke(messages)
+    final_answer = response.content.strip()
+    return final_answer
 
-    return response.content
+
+
+
+## adding a voice bot 
+
+
+
+
+
+
 
 
 ## TESTING 
@@ -267,9 +302,3 @@ reply = answer_user_query(user_question, collection)
 
 print("User:", user_question)
 print("Bot :", reply)
-
-
-
-
-
-
