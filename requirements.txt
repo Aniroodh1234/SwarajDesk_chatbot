@@ -37,3 +37,4 @@ SpeechRecognition
 pydub
 gtts
 python-multipart
+deep-translator
