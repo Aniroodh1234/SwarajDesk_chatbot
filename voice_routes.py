@@ -20,38 +20,37 @@ async def voice_chat(file: UploadFile, language: str = Form("english")):
 
         # 2) Convert speech → text
         user_msg = speech_to_text(temp_path)
-        
+
         if not user_msg or user_msg.strip() == "":
             return {
-                "audio_url": None, 
-                "reply": None, 
+                "audio_url": None,
+                "reply": None,
                 "error": "Unable to understand voice message. Please speak clearly and try again."
             }
 
-        # 3) Get RAG answer (same pipeline as text chat)
+        # 3) Pass transcription to RAG — forced to selected language
         bot_reply = answer_user_query(user_msg, collection, language)
 
-        # 4) Convert answer text → speech
+        # 4) Convert reply to speech — same language user selected
         audio_file = text_to_speech(bot_reply, language)
 
         return {
-            "audio_url": audio_file, 
+            "audio_url": audio_file,
             "reply": bot_reply,
-            "transcription": user_msg  # Optional: return what was heard
+            "transcription": user_msg
         }
-        
+
     except Exception as e:
         print(f"Voice chat error: {e}")
         return {
-            "audio_url": None, 
-            "reply": None, 
+            "audio_url": None,
+            "reply": None,
             "error": f"Error processing voice message: {str(e)}"
         }
-    
+
     finally:
-        # 5) Clean up temp input file
         if temp_path and os.path.exists(temp_path):
             try:
                 os.remove(temp_path)
             except:
-                pass  # Ignore cleanup errors
+                pass
