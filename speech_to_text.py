@@ -16,7 +16,16 @@ if os.name == 'nt':  # Windows
             print(f"[DEBUG] Using FFmpeg from: {path}")
             break
 
-def speech_to_text(audio_path: str) -> str:
+
+def speech_to_text(audio_path: str, ui_language: str = "english") -> str:
+    """
+    Convert any supported audio file (mp3, m4a, wav, ogg, webm…) to text.
+
+    ui_language is the *target interface language* from the client:
+    - "english"  -> use Google STT with en-IN
+    - "hindi", "hinglish", "odia" -> use Google STT with hi-IN
+    This keeps behaviour aligned with your text RAG pipeline.
+    """
     print(f"[DEBUG] Processing audio file: {audio_path}")
     print(f"[DEBUG] File exists: {os.path.exists(audio_path)}")
     print(f"[DEBUG] File size: {os.path.getsize(audio_path) if os.path.exists(audio_path) else 0} bytes")
@@ -45,8 +54,8 @@ def speech_to_text(audio_path: str) -> str:
             audio = AudioSegment.from_file(audio_path)
         
         # Convert to mono and set sample rate for better recognition
-        audio = audio.set_channels(1)  # Mono
-        audio = audio.set_frame_rate(16000)  # 16kHz
+        audio = audio.set_channels(1)       # Mono
+        audio = audio.set_frame_rate(16000) # 16kHz
         
         # Export as WAV
         audio.export(wav_path, format='wav')
@@ -67,10 +76,20 @@ def speech_to_text(audio_path: str) -> str:
             audio_data = recognizer.record(source)
             print(f"[DEBUG] Audio recorded, attempting recognition...")
 
-        # Recognize speech using Google Speech Recognition
-        # hi-IN handles Hindi + a lot of Hinglish reasonably well
-        text = recognizer.recognize_google(audio_data, language="hi-IN")
+        # -------- LANGUAGE-SELECTION FIX --------
+        ui_lang = (ui_language or "english").lower()
+
+        if ui_lang == "english":
+            google_lang = "en-IN"     # or "en-US" if you prefer
+        elif ui_lang in ("hindi", "hinglish", "odia"):
+            google_lang = "hi-IN"     # Hindi locale, handles Hinglish pretty well
+        else:
+            google_lang = "hi-IN"
+
+        print(f"[DEBUG] Using Google STT language: {google_lang}")
+        text = recognizer.recognize_google(audio_data, language=google_lang)
         print(f"[DEBUG] Recognition successful: '{text}'")
+        # ----------------------------------------
         
         # Clean up converted file
         if os.path.exists(wav_path):
