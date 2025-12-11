@@ -1,207 +1,185 @@
-# SwarajDesk Multilingual RAG-Powered Conversational Support System
+# Intelligent Citizen Support Platform — AI-Powered Multilingual RAG and Voice Assistance
 
-An AI-powered multilingual citizen support system that delivers accurate, hallucination-free responses using Retrieval-Augmented Generation (RAG). The system supports both text and voice interactions, answering queries strictly from verified SwarajDesk documents and policies.
+A multilingual, retrieval-augmented support system designed to assist citizens with SwarajDesk services through natural language interaction. The platform provides accurate, policy-grounded responses using a RAG pipeline, supports voice-based queries and responses, and seamlessly redirects users to human support when required.
 
-## Features
+## 1. Overview
 
-### Core Capabilities
+This project implements an AI-driven public helpdesk capable of understanding and responding to user queries in English, Hindi, and Hinglish through both text and voice interactions. It integrates:
 
-- **Multilingual Support**: English, Hindi, Hinglish, and Odia (easily scalable)
-- **Zero Hallucinations**: Answers derived exclusively from authenticated knowledge base
-- **Voice Input**: Speech-to-text conversion for natural voice queries
-- **Voice Output**: Text-to-speech responses in selected language
-- **Text Chat**: Full-featured text-based conversation interface
-- **Context-Aware**: Vector similarity search with semantic understanding
-- **Smart Escalation**: Automatic redirection to support/admin when needed
+- Retrieval-Augmented Generation (RAG) for strictly context-based responses
+- Multilingual LLM reasoning using Groq's inference models
+- Speech-to-Text (STT) and Text-to-Speech (TTS) for real-time audio assistance
+- A fully containerizable and deployable FastAPI backend
+- ChromaDB for vector search over verified SwarajDesk policies and documents
 
----
+The system ensures reliability, transparency, and factual accuracy by answering exclusively from the vetted knowledge base and escalating out-of-scope queries to human support.
 
-## System Architecture
+## 2. Features
 
+### Core Functionalities
+
+- Multilingual support for English, Hindi, Hinglish (text + voice)
+- Voice-based interaction with automatic audio format handling (mp3, wav, m4a, webm, ogg)
+- Fully context-grounded answers using RAG; zero hallucinations
+- Automatic escalation to support or admin for unresolved issues
+- FastAPI backend with modular architecture and production-ready routing
+- High-performance inference using Groq LLM APIs
+- Persistent vector store using ChromaDB
+
+### Voice Pipeline
+
+- Speech-to-Text using audio preprocessing with FFmpeg + Google STT
+- Text-to-Speech using gTTS with dynamic language selection
+- Robust audio conversion pipeline that normalizes all input formats
+
+### Reliability & Safety
+
+- Strict system prompts ensuring rule-bound responses
+- Automatic fallback logic for:
+  - Out-of-domain queries
+  - Insufficient context
+  - Ambiguous intent
+- Support escalation paths:
+  - General Support: https://swarajdesk.in/support
+  - Admin Assistance: https://swarajdesk.in/admin-assist
+
+## 3. Technology Stack
+
+- **Backend Framework:** FastAPI
+- **LLM Inference:** Groq (openai/gpt-oss-120b)
+- **Vector Database:** ChromaDB (HNSW cosine similarity)
+- **Embeddings Model:** paraphrase-multilingual-MiniLM-L12-v2
+- **Speech Processing:** FFmpeg, pydub, Python SpeechRecognition
+- **Text-to-Speech:** gTTS
+- **Environment Management:** Python 3.10+, venv
+- **Deployment:** AWS EC2 (Ubuntu 22.04)
+- **API Standards:** REST, JSON input/output
+- **Security:** CORS management, environment-based secrets
+
+## 4. Project Structure
 ```
-User Input (Text/Voice)
-        ↓
-[Speech-to-Text] ← Google STT (if voice)
-        ↓
-┌─────────────────────────────┐
-│      RAG Pipeline           │
-│  • Sentence Transformers    │
-│  • ChromaDB Vector Store    │
-│  • Groq LLM (gpt-oss-120b)  │
-└─────────────────────────────┘
-        ↓
-Bot Response (Text)
-        ↓
-[Text-to-Speech] ← gTTS (if voice)
-        ↓
-Final Output (Text/Audio)
-```
-
----
-
-## Project Structure
-
-```
-SIH-SWARJ_AI_RAG_BOT_(DEPLOYED_FINAL)/
+SwarajDesk_chatbot/
 │
-├── main.py                      # FastAPI app entry point
-├── app.py                       # RAG pipeline & LLM logic
-├── speech_to_text.py            # Voice input processing
-├── text_to_speech.py            # Voice output generation
-├── voice_routes.py              # Voice chat API endpoints
-├── SwarajDesk_vectorDB.json     # Knowledge base documents
-├── requirements.txt             # Python dependencies
-├── .env                         # Environment variables (not in git)
+├── main.py                     # FastAPI entrypoint for text + voice endpoints
+├── app.py                      # Core RAG logic and model workflow
+├── voice_routes.py             # Voice-chat API (STT → RAG → TTS)
+├── speech_to_text.py           # Audio preprocessing + STT
+├── text_to_speech.py           # gTTS-based TTS conversion
 │
-├── chroma_store/                # Vector database persistence
-└── static/
-    └── voice/                   # Generated audio files
+├── SwarajDesk_vectorDB.json    # Document knowledge base
+├── chroma_store/               # Persistent ChromaDB vector storage
+│
+├── static/
+│   └── voice/                  # Temporary generated audio files
+│
+├── requirements.txt
+├── .env (ignored)
+└── README.md
 ```
 
----
+## 5. Installation & Setup
 
-## Technology Stack
-
-| Layer | Technology |
-|-------|-----------|
-| **Backend** | FastAPI + Uvicorn |
-| **Vector Store** | ChromaDB |
-| **Embeddings** | HuggingFace Sentence-Transformers (multilingual) |
-| **LLM** | Groq API (openai/gpt-oss-120b) |
-| **Speech-to-Text** | Google SpeechRecognition |
-| **Text-to-Speech** | gTTS |
-| **Deployment** | AWS EC2, Gunicorn + Nginx |
-
----
-
-## Project Setup
-
-### Prerequisites
-
-- Python 3.8+
-- pip
-- Virtual environment (recommended)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/<your-username>/swarajdesk-rag-bot.git
-   cd swarajdesk-rag-bot
-   ```
-
-2. **Create and activate virtual environment**
-   ```bash
-   # macOS/Linux
-   python -m venv venv
-   source venv/bin/activate
-   
-   # Windows
-   python -m venv venv
-   venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-
-4. **Set up environment variables**
-   
-   Create a `.env` file in the root directory:
-   ```env
-   GROQ_API_KEY=your_groq_api_key_here
-   HUGGINGFACEHUB_API_TOKEN=your_huggingface_token_here
-   LANGCHAIN_API_KEY=your_langchain_key_here  # Optional
-   ```
-
-5. **Create required directories**
-   ```bash
-   mkdir -p static/voice
-   ```
-
-6. **Run the application**
-   ```bash
-   uvicorn main:app --reload --port 8000
-   ```
-
-   The API will be available at `http://localhost:8000`
-
----
-
-## API Endpoints
-
-### Health Check
-```http
-GET /health
+### Step 1: Clone Repository
+```bash
+git clone <your-repo-url>
+cd SwarajDesk_chatbot
 ```
 
-### Welcome
-```http
-GET /
+### Step 2: Create Virtual Environment
+```bash
+python3 -m venv venv
+source venv/bin/activate        # Linux/macOS
+venv\Scripts\activate           # Windows
 ```
 
-### Text Chat
-```http
-POST /chat_swaraj
-Content-Type: application/json
+### Step 3: Install Dependencies
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
 
+### Step 4: Configure Environment Variables
+
+Create a `.env` file:
+```
+GROQ_API_KEY=your_groq_key
+HUGGINGFACEHUB_API_TOKEN=your_hf_key
+LANGCHAIN_API_KEY=your_langchain_key   # optional
+```
+
+### Step 5: Ensure FFmpeg is Installed
+
+For Ubuntu:
+```bash
+sudo apt update
+sudo apt install ffmpeg
+```
+
+For Windows, download FFmpeg and add it to PATH.
+
+## 6. Running the Application Locally
+
+### Start the FastAPI server
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### API Endpoints
+
+#### 1. Text-based Chat
+
+**POST** `/chat_swaraj`
+
+Body:
+```json
 {
-  "user_query": "How do I reset my password?",
+  "user_query": "How can I reset my password?",
   "language": "english"
 }
 ```
 
-**Response:**
-```json
-{
-  "reply": "To reset your password, navigate to...",
-  "sources": ["document_id_1", "document_id_2"]
-}
+#### 2. Voice-based Chat
+
+**POST** `/voice-chat`
+
+Multipart Form Data:
+
+- `file`: audio file
+- `language`: english | hindi | hinglish
+
+## 7. RAG Pipeline Overview
+
+1. User query (text or transcribed voice) is converted to English for semantic uniformity.
+2. Embeddings generated via multilingual MiniLM.
+3. ChromaDB returns top-k relevant context chunks.
+4. Groq LLM (gpt-oss-120b) generates responses strictly using given context.
+5. Output is translated back to the user's target language for voice synthesis.
+6. gTTS produces final audio output in mp3.
+
+## 8. Deployment Guide (AWS EC2)
+
+1. Launch Ubuntu EC2 instance (t3.medium recommended).
+2. Install Python, Git, FFmpeg, and pip.
+3. Clone repository to EC2.
+4. Create a virtual environment and install dependencies.
+5. Add secrets to `.env`.
+6. Allow inbound rules for port 8000.
+7. Start backend server:
+```bash
+nohup uvicorn main:app --host 0.0.0.0 --port 8000 &
 ```
 
-### Voice Chat
-```http
-POST /voice-chat
-Content-Type: multipart/form-data
-
-Form Data:
-- file: audio file (.wav or .mp3)
-- language: english | hindi | hinglish | odia
+8. Access from browser:
+```
+http://<EC2-Public-IP>:8000/docs
 ```
 
-**Response:**
-```json
-{
-  "reply": "Your answer in text format",
-  "audio_url": "/static/voice/82f3b0a5e4b.mp3"
-}
-```
+## 9. Key Strengths of the System
 
----
-
-## Safety & Hallucination Prevention
-
-The system ensures accuracy through:
-
-- **Source-grounded responses**: Answers derived only from retrieved context
-- **No fabrication**: System never generates information not in the knowledge base
-- **Query validation**: Non-SwarajDesk queries redirected to support
-- **Escalation protocol**: Complex cases forwarded to admin
-- **Citation tracking**: All responses linked to source documents
-
----
-
-## Supported Languages
-
-| Language | Code | Status |
-|----------|------|--------|
-| English | `english` | Full Support |
-| Hindi | `hindi` | Full Support |
-| Hinglish | `hinglish` | Full Support |
-| Odia | `odia` | Full Support |
-
-*Additional languages can be added by extending the language configuration.*
-
-
+- End-to-end multilingual understanding and generation
+- Voice-enabled interaction for accessibility
+- Guaranteed correctness through strict RAG enforcement
+- Scalable architecture capable of supporting additional regional languages
+- High inference speed powered by Groq
+- Production-grade modular backend design
+- Secure, stateless, cloud-deployable APIs
